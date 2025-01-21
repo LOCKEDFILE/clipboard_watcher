@@ -1,3 +1,3 @@
 abstract mixin class ClipboardListener {
-  void onClipboardChanged() {}
+  void onClipboardChanged(dynamic data) {}
 }

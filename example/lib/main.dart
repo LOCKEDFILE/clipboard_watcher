@@ -52,7 +52,7 @@ class _MyAppState extends State<MyApp> with ClipboardListener {
   }
 
   @override
-  Future<void> onClipboardChanged() async {
+  Future<void> onClipboardChanged(dynamic data) async {
     ClipboardData? newClipboardData =
         await Clipboard.getData(Clipboard.kTextPlain);
     print(newClipboardData?.text ?? '');

@@ -24,7 +24,7 @@ class ClipboardWatcher {
       }
 
       if (call.method == 'onClipboardChanged') {
-        listener.onClipboardChanged();
+        listener.onClipboardChanged(call.arguments);
       } else {
         throw UnimplementedError();
       }
