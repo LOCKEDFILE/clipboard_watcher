@@ -47,10 +47,49 @@ public class ClipboardWatcherPlugin: NSObject, FlutterPlugin {
     }
     
     @objc private func checkForChangesInPasteboard() {
-        if (pasteboard.changeCount != changeCount) {
-            let args: NSDictionary = [:]
+        if pasteboard.changeCount != changeCount {
+            changeCount = pasteboard.changeCount
+            
+            // Check for string data
+            if let copiedString = pasteboard.string(forType: .string) {
+                let args: NSDictionary = ["type": "text", "data": copiedString]
+                channel.invokeMethod("onClipboardChanged", arguments: args, result: nil)
+                return
+            }
+            
+            // Check for image data
+            if let imageData = pasteboard.data(forType: .tiff),
+               let image = NSImage(data: imageData) {
+                if let imagePath = saveImageToTemporaryDirectory(image: image) {
+                    let args: NSDictionary = ["type": "image", "data": imagePath]
+                    channel.invokeMethod("onClipboardChanged", arguments: args, result: nil)
+                    return
+                }
+            }
+            
+            // No recognizable data found
+            let args: NSDictionary = ["type": "unknown"]
             channel.invokeMethod("onClipboardChanged", arguments: args, result: nil)
-            changeCount = pasteboard.changeCount;
+        }
+    }
+    
+    private func saveImageToTemporaryDirectory(image: NSImage) -> String? {
+        guard let tiffData = image.tiffRepresentation,
+              let bitmap = NSBitmapImageRep(data: tiffData),
+              let pngData = bitmap.representation(using: .png, properties: [:]) else {
+            return nil
+        }
+        
+        let tempDirectory = NSTemporaryDirectory()
+        let uniqueName = UUID().uuidString + ".png"
+        let filePath = (tempDirectory as NSString).appendingPathComponent(uniqueName)
+        
+        do {
+            try pngData.write(to: URL(fileURLWithPath: filePath))
+            return filePath
+        } catch {
+            print("Failed to save image: \(error)")
+            return nil
         }
     }
 }
